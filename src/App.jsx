@@ -57,7 +57,7 @@ function App() {
     {!city ? <div className='loading-screen'><img src={loading} alt="loading screen" /></div> :
       <div className='layout'>
         <header>
-          <h1>WEATHER</h1>
+          <h1>WEATHER APP</h1>
         </header>
         <section className='container'>
           <div className='content'>
