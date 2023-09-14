@@ -54,7 +54,10 @@ function App() {
 
   return (
     <>
-    {!city ? <div className='loading-screen'><img src={loading} alt="loading screen" /></div> :
+    {!city ? <div className='loading-screen'>
+      <img src={loading} alt="loading screen" />
+      <p>Loading Data...</p>
+      </div> :
       <div className='layout'>
         <header>
           <h1>WEATHER APP</h1>
