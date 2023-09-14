@@ -1,59 +1,95 @@
 import './App.css'
-import { useState, useEffect} from 'react';
-import SearchLocation from './componets/SearchLocation';
+import { useState, useEffect } from 'react';
 import ShowTemp from './componets/ShowTemp';
 import WeekTemp from './componets/WeekTemp';
+import loading from './images/loading.gif';
 
 function App() {
 
-  const [search, setSearch] = useState('cambodia')
-  const [datas, setDatas] = useState([])
+  const [location, setLocation] = useState({});
+  const [temp, setTemp] = useState([]);
+  const [forecastData, setForecastData] = useState([]);
+  const [city, setCity] = useState('')
 
   useEffect(() => {
-    const getTempDatas = async() =>{
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${search}&units=Metric&appid=0d9feb068d8c074ba5949982c8f24443`);
-      const res = await response.json();
-      setDatas([res])
-    }
-    getTempDatas();
-
+    getLocation();
   }, []);
 
-  const tempdata = datas.map((data) => {
-      return <ShowTemp 
-      city={data.name}
-      weather={data.weather.main}
-      tempareture={data.main.temp}
-      humidity={data.main.humidity}
-      wind={data.wind.speed}
-      min_temp={data.main.temp_min}
-      max_temp={data.main.temp_max}
-      />
-    });
-  
+  useEffect(() => {
+    if(location.latitude && location.longitude){
+      getWeatherDatas();
+      getForecastDatas();
+    }
+  }, [location])
 
+  const getLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setLocation({ latitude, longitude });
+      })
+    } else {
+      console.error('Geolocation is not supported by this browser.');
+    }
+  };
 
+  const getWeatherDatas = async () => {
+      const weatherResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&units=Metric&appid=0d9feb068d8c074ba5949982c8f24443`);
+      const weatherData = await weatherResponse.json();
+      const cityName = weatherData.name;
+      setCity(cityName)
+      setTemp([weatherData])
+  };
+
+  const getForecastDatas = async () => {
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&units=Metric&appid=0d9feb068d8c074ba5949982c8f24443`);
+      const data = await response.json();
+      const forecastEachDay = []
+      for (let i = 1; i < 5; i++) {
+        const day = {'day': data.list[8 * i].dt_txt, 'temp': data.list[8 * i].main.temp, 'weather': data.list[8 * i].weather[0].description, 'icon': data.list[8 * i].weather[0].icon}
+        forecastEachDay.push(day)
+      }
+      setForecastData(forecastEachDay);
+  };
 
   return (
     <>
+    {!city ? <div className='loading-screen'><img src={loading} alt="loading screen" /></div> :
       <div className='layout'>
         <header>
           <h1>WEATHER</h1>
         </header>
-        <SearchLocation />
         <section className='container'>
           <div className='content'>
-            {tempdata}
-            <p className='week-text'>Next 6 Days</p>
+            {temp.map((data) => {
+              return <ShowTemp
+                city={data.name}
+                weather={data.weather[0].description}
+                tempareture={Math.floor(data.main.temp)}
+                humidity={Math.floor(data.main.humidity)}
+                wind={data.wind.speed}
+                min_temp={Math.floor(data.main.temp_min)}
+                max_temp={Math.floor(data.main.temp_max)}
+                icon={data.weather[0].icon}
+              />
+            })}
+            <p className='week-text'>Next 4 Days</p>
             <section className='week-temp'>
               <div className='show-week-temp'>
-                <WeekTemp />
+                {forecastData.map((data) => {
+                  return <WeekTemp 
+                  day={new Date(data.day).toLocaleString('en-US', {weekday: 'long'})}
+                  tempareture={Math.floor(data.temp)}
+                  weather={data.weather}
+                  icon={data.icon}
+                  />
+                })}
               </div>
             </section>
           </div>
-
         </section>
       </div>
+      }
     </>
   )
 }
