@@ -305,6 +305,10 @@ h1 {
   .tempareture {
     font-size: 72px;
   }
+
+  .card-temp {
+    margin-bottom: 10px;
+  }
 }
 
 
